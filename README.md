@@ -68,7 +68,7 @@ DetectionSplitLayer
   - Class probabilities
   - Bounding box coordinates `(x, y, w, h)`
 
-<img src="output/architecture.png" width="300" />
+<img src="output/architecture.png" width="600" />
 
 ---
 
@@ -103,10 +103,10 @@ Total Loss = CE + α × MSE
 ---
 
 <p align="center">
-  <img src="output/combined_training_history_adam.png" width="300" />
-  <img src="output/training_history_adam.png" width="300" />
-  <img src="test_predictions_adam/9.png" width="300" />
-  <img src="output/test_statistics_adam.png" width="300" />
+  <img src="output/combined_training_history_adam.png" width="550" />
+  <img src="output/training_history_adam.png" width="550" />
+  <img src="test_predictions_adam/9.png" width="500" />
+  <img src="output/test_statistics_adam.png" width="600" />
 </p>
 
 ## 🧪 How to Run
@@ -122,5 +122,6 @@ Total Loss = CE + α × MSE
 You can reload weights before evaluation:
 
     model.load_weights("model_weights_with_adam.npz")
+
 
 
