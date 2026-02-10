@@ -2,4 +2,3 @@ dataset/
 report.docx
 model_weights_with_sgd.npz
 tensorflow_model.py
-output

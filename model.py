@@ -5,7 +5,7 @@ from utils.visualize import show_samples,plot_training_history,visualize_predict
 from utils.utils import save_model_weights
 import os
 
-dataset_root = r"C:\Users\fathi\OneDrive\Desktop\Deep Learning\final_project\dataset"
+dataset_root = r"DATASET-ROOT"
 CLASSES = ['butterfly','dalmatian','dolphin']
 TARGET_SIZE = (64, 64)  # All images resized to 64x64 pixels
 MAX_OBJECT = 1  # Maximum objects per image
