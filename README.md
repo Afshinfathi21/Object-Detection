@@ -104,7 +104,7 @@ Total Loss = CE + α × MSE
 
 <p align="center">
   <img src="output/combined_training_history_adam.png" width="500" />
-  <img src="output/training_history_adam.png" width="500" />
+  <img src="output/training_history_adam.png" width="600" />
   <img src="test_predictions_adam/9.png" width="500" />
   <img src="output/test_statistics_adam.png" width="500" />
 </p>
@@ -122,6 +122,7 @@ Total Loss = CE + α × MSE
 You can reload weights before evaluation:
 
     model.load_weights("model_weights_with_adam.npz")
+
 
 
 
