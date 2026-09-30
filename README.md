@@ -1,11 +1,11 @@
-﻿# 🧠 CNN Object Detection from Scratch (NumPy)
+# CNN Object Detection from Scratch with NumPy
 
 This project implements a **Convolutional Neural Network (CNN) from scratch using NumPy** for **image classification and single-object detection**.  
 No deep learning frameworks (TensorFlow / PyTorch) are used — all forward and backward passes, optimizers, and layers are manually implemented.
 
 ---
 
-## 📌 Features
+## What this project demonstrates
 
 - ✅ Custom CNN built **entirely with NumPy**
 - ✅ Manual implementation of:
@@ -108,6 +108,41 @@ Total Loss = CE + α × MSE
   <img src="test_predictions_adam/9.png" width="500" />
   <img src="output/test_statistics_adam.png" width="500" />
 </p>
+
+## Why build this from scratch?
+
+Using PyTorch or TensorFlow is the standard approach for practical deep-learning development. This project takes a different approach for educational purposes: implementing the core components manually makes the underlying mathematics and data flow explicit.
+
+The project was built to better understand:
+
+- How convolutional layers transform images
+- How gradients flow backward through a CNN
+- How optimizers update parameters
+- How classification and localization objectives can be combined
+- How a neural network can produce both class predictions and bounding-box coordinates
+
+## Technologies
+
+- Python
+- NumPy
+- Matplotlib
+- tqdm
+- Convolutional Neural Networks
+- Backpropagation
+- Adam / SGD
+- Object localization
+- Computer Vision
+
+## Future improvements
+
+Possible next steps include:
+
+- Add more rigorous detection metrics such as IoU
+- Add a dedicated test split
+- Compare the from-scratch implementation with a PyTorch baseline
+- Improve bounding-box parameterization and localization loss
+- Experiment with data augmentation
+- Add reproducible training configuration and random seeds
 
 ## 🧪 How to Run
 
