@@ -30,3 +30,17 @@ def load_weights(self, filepath: str):
             print(f"  Loaded biases for layer {i}")
         
     print("Weights loaded successfully!")
+
+def load_image_for_prediction(image_path, target_size=(64, 64)):
+    from PIL import Image
+
+    if not os.path.isfile(image_path):
+        raise FileNotFoundError(f"Image not found: {image_path}")
+
+    with Image.open(image_path) as image:
+        image = image.convert('RGB')
+        image = image.resize(target_size)
+        image_array = np.asarray(image, dtype=np.float32) / 255.0
+
+    image_array = image_array.transpose(2, 0, 1)
+    return np.expand_dims(image_array, axis=0)
