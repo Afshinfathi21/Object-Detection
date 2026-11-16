@@ -1,25 +1,25 @@
 import numpy as np
 from tqdm import tqdm, trange
-from utils.load_dataset import load_dataset
+from utils.preprocessing import load_penn_fudan_dataset
 from utils.visualize import show_samples,plot_training_history,visualize_predictions_with_boxes
 from utils.utils import save_model_weights
 import os
 
-dataset_root = r"DATASET-ROOT"
-CLASSES = ['butterfly','dalmatian','dolphin']
-TARGET_SIZE = (64, 64)  # All images resized to 64x64 pixels
-MAX_OBJECT = 1  # Maximum objects per image
-NUM_CLASSES = 3
+dataset_root = r"path/to/PennFudanPed"
+CLASSES = ['pedestrian']
+TARGET_SIZE = (64, 64)
+MAX_OBJECT = 1
+NUM_CLASSES = len(CLASSES)
 INPUT_CHANNELS = 3
 
 print("=" * 60)
 print("Loading Dataset...")
 print("=" * 60)
 
-x_train, x_test, y_train, y_test = load_dataset(
+x_train, x_test, y_train, y_test = load_penn_fudan_dataset(
     dataset_root,
-    classes=CLASSES,
-    target_size=(64,64)
+    test_size=0.2,
+    target_size=TARGET_SIZE
 )
 
 show_samples(x_train, y_train, CLASSES, n=5)
@@ -775,7 +775,14 @@ if len(model.train_losses) > 0:
 
 
 
-visualize_predictions_with_boxes(model, x_test, y_test, CLASSES, num_samples=12)
+visualize_predictions_with_boxes(
+    model,
+    x_test,
+    y_test,
+    CLASSES,
+    NUM_CLASSES=NUM_CLASSES,
+    num_samples=12
+)
 
 
 print("\n" + "=" * 60)
