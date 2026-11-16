@@ -123,7 +123,7 @@ def visualize_predictions_with_boxes(model, x_test, y_test, classes,NUM_CLASSES=
     # Create figure
     rows = int(np.ceil(len(samples) / 4))
     fig, axes = plt.subplots(rows, 4, figsize=(20, rows * 5))
-    axes = axes.flatten() if num_samples > 1 else [axes]
+    axes = np.atleast_1d(axes).ravel()
     
     for idx, (ax, sample_idx, pred_info, true_label) in enumerate(zip(axes, sample_indices, predictions, true_labels)):
         # Get image (C, H, W) -> (H, W, C)
