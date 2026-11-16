@@ -75,23 +75,27 @@ def load_penn_fudan_dataset(
             resized_image = image.resize(target_size)
             image_array = np.asarray(resized_image, dtype=np.float32) / 255.0
 
-        for xmin, ymin, xmax, ymax in boxes:
-            box = np.array([
-                xmin / original_width,
-                ymin / original_height,
-                xmax / original_width,
-                ymax / original_height
-            ], dtype=np.float32)
+        xmin, ymin, xmax, ymax = max(
+            boxes,
+            key=lambda box: (box[2] - box[0]) * (box[3] - box[1])
+        )
 
-            box = np.clip(box, 0.0, 1.0)
+        box = np.array([
+            xmin / original_width,
+            ymin / original_height,
+            xmax / original_width,
+            ymax / original_height
+        ], dtype=np.float32)
 
-            if box[0] >= box[2] or box[1] >= box[3]:
-                continue
+        box = np.clip(box, 0.0, 1.0)
 
-            class_label = np.array([1.0], dtype=np.float32)
-            target = np.concatenate((class_label, box))
+        if box[0] >= box[2] or box[1] >= box[3]:
+            continue
 
-            samples.append((image_filename, image_array, target))
+        class_label = np.array([1.0], dtype=np.float32)
+        target = np.concatenate((class_label, box))
+
+        samples.append((image_filename, image_array, target))
 
     if not samples:
         raise ValueError("No valid annotated objects were found.")
