@@ -258,3 +258,55 @@ def visualize_predictions_with_boxes(model, x_test, y_test, classes,NUM_CLASSES=
     plt.tight_layout()
     plt.savefig('test_statistics.png', dpi=100, bbox_inches='tight')
     plt.show()
+
+def visualize_single_prediction(image, prediction, classes):
+    """Display one image with its predicted class, confidence, and bounding box."""
+
+    image = np.asarray(image)
+
+    if image.ndim == 4:
+        if image.shape[0] != 1:
+            raise ValueError("Expected exactly one image.")
+        image = image[0]
+
+    if image.ndim != 3:
+        raise ValueError("Image must have 3 dimensions: CHW or HWC.")
+
+    if image.shape[0] == 3:
+        image = image.transpose(1, 2, 0)
+
+    if image.shape[-1] != 3:
+        raise ValueError("Image must have 3 RGB channels.")
+
+    class_id = int(prediction['class'])
+    class_name = classes[class_id]
+    confidence = float(prediction['confidence'])
+
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.imshow(np.clip(image, 0, 1))
+
+    pred_box = prediction.get('box')
+    if pred_box is not None:
+        box = np.asarray(pred_box).reshape(-1, 4)[0].copy()
+        height, width = image.shape[:2]
+
+        x1 = box[0] * width
+        y1 = box[1] * height
+        x2 = box[2] * width
+        y2 = box[3] * height
+
+        rect = patches.Rectangle(
+            (x1, y1),
+            x2 - x1,
+            y2 - y1,
+            linewidth=2,
+            edgecolor='red',
+            facecolor='none'
+        )
+        ax.add_patch(rect)
+
+    ax.set_title(f"Prediction: {class_name} ({confidence:.1%})")
+    ax.axis('off')
+    plt.tight_layout()
+    plt.show()
+
