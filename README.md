@@ -66,7 +66,7 @@ DetectionSplitLayer
 
 - **Output**:
   - Class probabilities
-  - Bounding box coordinates `(x, y, w, h)`
+  - Bounding box coordinates `(xmin, ymin, xmax, ymax)`, normalized to `[0, 1]`
 
 <img src="output/architecture.png" width="600" />
 
@@ -97,7 +97,8 @@ Total Loss = CE + α × MSE
 ## 📊 Evaluation
 
 - Accuracy is computed using **classification predictions**
-- Bounding boxes are visualized on test images
+- Bounding boxes use normalized coordinates during training and are converted to pixels only for visualization
+- Detection evaluation reports mean IoU and class-correct IoU@0.5
 - Training & validation loss/accuracy plots included
 
 ---

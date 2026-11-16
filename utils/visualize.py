@@ -121,7 +121,7 @@ def visualize_predictions_with_boxes(model, x_test, y_test, classes,NUM_CLASSES=
     predictions = model.predict_with_boxes(samples)
     
     # Create figure
-    rows = int(np.ceil(num_samples / 4))
+    rows = int(np.ceil(len(samples) / 4))
     fig, axes = plt.subplots(rows, 4, figsize=(20, rows * 5))
     axes = axes.flatten() if num_samples > 1 else [axes]
     
@@ -143,12 +143,18 @@ def visualize_predictions_with_boxes(model, x_test, y_test, classes,NUM_CLASSES=
         
         # Get ground truth bounding box
         if true_label.shape[0] > NUM_CLASSES:
-            true_box = true_label[NUM_CLASSES:].reshape(-1, 4)
+            true_box = true_label[NUM_CLASSES:].reshape(-1, 4).copy()
+            true_box[:, [0, 2]] *= img.shape[1]
+            true_box[:, [1, 3]] *= img.shape[0]
         else:
             true_box = None
         
         # Get predicted bounding box
         pred_box = pred_info['box']
+        if pred_box is not None:
+            pred_box = pred_box.copy()
+            pred_box[:, [0, 2]] *= img.shape[1]
+            pred_box[:, [1, 3]] *= img.shape[0]
         
         # Draw ground truth box (green)
         if true_box is not None and np.any(true_box != 0):

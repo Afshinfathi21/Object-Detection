@@ -356,19 +356,26 @@ class DetectionSplitLayer(Layer):
 
         exp_scores = np.exp(self.cls_scores - np.max(self.cls_scores, axis=1, keepdims=True))
         self.cls_probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
-        
-        self.out = np.concatenate([self.cls_probs, self.box_coords], axis=1)
+        self.box_probs = 1.0 / (1.0 + np.exp(-np.clip(self.box_coords, -60, 60)))
+        self.box_swapped_x = self.box_probs[:, 0] > self.box_probs[:, 2]
+        self.box_swapped_y = self.box_probs[:, 1] > self.box_probs[:, 3]
+        ordered_boxes = self.box_probs.copy()
+        ordered_boxes[:, [0, 2]] = np.sort(ordered_boxes[:, [0, 2]], axis=1)
+        ordered_boxes[:, [1, 3]] = np.sort(ordered_boxes[:, [1, 3]], axis=1)
+        self.out = np.concatenate([self.cls_probs, ordered_boxes], axis=1)
         return self.out
     
     def backward(self, up_grad: np.ndarray) -> np.ndarray:
-
         grad_cls = up_grad[:, :self.num_classes]
-        grad_box = up_grad[:, self.num_classes:]
-        
-
-        grad_cls_simple = grad_cls
-        
-        return np.concatenate([grad_cls_simple, grad_box], axis=1)
+        grad_box = up_grad[:, self.num_classes:].copy()
+        grad_box[self.box_swapped_x, 0], grad_box[self.box_swapped_x, 2] = (
+            grad_box[self.box_swapped_x, 2].copy(), grad_box[self.box_swapped_x, 0].copy()
+        )
+        grad_box[self.box_swapped_y, 1], grad_box[self.box_swapped_y, 3] = (
+            grad_box[self.box_swapped_y, 3].copy(), grad_box[self.box_swapped_y, 1].copy()
+        )
+        grad_box *= self.box_probs * (1.0 - self.box_probs)
+        return np.concatenate([grad_cls, grad_box], axis=1)
 
 class Loss:
     def __init__(self):
@@ -450,7 +457,7 @@ class DetectionLoss(Loss):
 
         grad_cls = (pred_cls - target_cls) / batch_size
 
-        grad_box = 2 * self.alpha * (pred_box - target_box) / batch_size
+        grad_box = 2 * self.alpha * (pred_box - target_box) / pred_box.size
 
         grad = np.concatenate([grad_cls, grad_box], axis=1)
         
@@ -499,11 +506,40 @@ class CNN:
         accuracy = np.mean(pred_classes == true_classes)
         return accuracy * 100
     
+    def _box_ious(self, pred_boxes: np.ndarray, true_boxes: np.ndarray) -> np.ndarray:
+        x1 = np.maximum(pred_boxes[:, 0], true_boxes[:, 0])
+        y1 = np.maximum(pred_boxes[:, 1], true_boxes[:, 1])
+        x2 = np.minimum(pred_boxes[:, 2], true_boxes[:, 2])
+        y2 = np.minimum(pred_boxes[:, 3], true_boxes[:, 3])
+        intersection = np.maximum(0, x2 - x1) * np.maximum(0, y2 - y1)
+        pred_area = np.maximum(0, pred_boxes[:, 2] - pred_boxes[:, 0]) * np.maximum(0, pred_boxes[:, 3] - pred_boxes[:, 1])
+        true_area = np.maximum(0, true_boxes[:, 2] - true_boxes[:, 0]) * np.maximum(0, true_boxes[:, 3] - true_boxes[:, 1])
+        union = pred_area + true_area - intersection
+        return np.divide(intersection, union, out=np.zeros_like(intersection), where=union > 0)
+
+    def compute_iou(self, predictions: np.ndarray, targets: np.ndarray) -> float:
+        return float(np.mean(self._box_ious(
+            predictions[:, NUM_CLASSES:NUM_CLASSES + 4],
+            targets[:, NUM_CLASSES:NUM_CLASSES + 4]
+        )))
+
+    def evaluate_detection(self, predictions: np.ndarray, targets: np.ndarray, iou_threshold: float = 0.5) -> dict:
+        pred_classes = np.argmax(predictions[:, :NUM_CLASSES], axis=1)
+        true_classes = np.argmax(targets[:, :NUM_CLASSES], axis=1)
+        ious = self._box_ious(
+            predictions[:, NUM_CLASSES:NUM_CLASSES + 4],
+            targets[:, NUM_CLASSES:NUM_CLASSES + 4]
+        )
+        return {
+            'mean_iou': float(np.mean(ious)),
+            'precision_at_iou': float(np.mean((ious >= iou_threshold) & (pred_classes == true_classes)))
+        }
+
     def train(self, x_train: np.ndarray, y_train: np.ndarray, 
               x_val: np.ndarray = None, y_val: np.ndarray = None,
               epochs: int = 50, batch_size: int = 32) -> None:
         
-        num_batches = len(x_train) // batch_size
+        num_batches = int(np.ceil(len(x_train) / batch_size))
 
         epoch_pbar = trange(epochs, desc="Training", unit="epoch", 
                            bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}')
@@ -523,7 +559,7 @@ class CNN:
             
             for batch_idx in batch_pbar:
                 start = batch_idx * batch_size
-                end = start + batch_size
+                end = min(start + batch_size, len(x_train_shuffled))
                 
                 x_batch = x_train_shuffled[start:end]
                 y_batch = y_train_shuffled[start:end]
@@ -582,7 +618,7 @@ class CNN:
     
     def predict_with_boxes(self, images: np.ndarray):
         """Make predictions and return class probabilities and bounding boxes"""
-        predictions = self.forward(images)
+        predictions = self.forward(images, training=False)
         batch_size = predictions.shape[0]
         
         results = []
@@ -593,8 +629,7 @@ class CNN:
             confidence = cls_probs[pred_class]
 
             if predictions.shape[1] > NUM_CLASSES:
-                box_coords = predictions[i, NUM_CLASSES:].reshape(-1, 4)
-                box_coords = np.clip(box_coords, 0, 64)
+                box_coords = predictions[i, NUM_CLASSES:].reshape(-1, 4).copy()
             else:
                 box_coords = None
             
@@ -721,6 +756,9 @@ test_pbar.update(1)
 test_pbar.close()
 
 print(f"\nTest Accuracy: {test_acc:.2f}%")
+detection_metrics = model.evaluate_detection(test_pred, y_test)
+print(f"Mean IoU: {detection_metrics['mean_iou']:.4f}")
+print(f"Accuracy with correct class and IoU >= 0.5: {detection_metrics['precision_at_iou'] * 100:.2f}%")
 
 if len(model.train_losses) > 0:
     print(f"\nFinal Training Statistics:")
