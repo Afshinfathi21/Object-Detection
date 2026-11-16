@@ -114,9 +114,6 @@ def load_penn_fudan_dataset(
     x_test = np.stack([sample[1] for sample in test_samples]).astype(np.float32)
     y_test = np.stack([sample[2] for sample in test_samples]).astype(np.float32)
 
-    x_train = x_train.transpose(0, 3, 1, 2)
-    x_test = x_test.transpose(0, 3, 1, 2)
-
     print(f"Training images: {len(train_images)}")
     print(f"Testing images: {len(test_images)}")
     print(f"Training samples: {len(x_train)}")
